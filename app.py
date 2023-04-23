@@ -1,3 +1,4 @@
+import tkinter as tk
 from tkinter import ttk
 from tkinter import *
 
@@ -7,16 +8,25 @@ from sqlite3 import Error
 class Product:
     db_name = 'database.db'
 
-    def create_connection(db_file):
+    def create_connection(self):
         conn = None
         try:
-            conn = sqlite3.connect(db_file)
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute('CREATE TABLE IF NOT EXISTS product (Name TEXT, Price REAL)')
+            conn.commit()
             print(sqlite3.version)
         except Error as e:
             print(e)
         finally:
             if conn:
                 conn.close()
+                
+#     def create_table(self):
+#         with sqlite3.connect(self.db_name) as conn:
+#             cursor = conn.cursor()
+#             cursor.execute('CREATE TABLE IF NOT EXISTS product (Name TEXT, Price REAL)')
+#             conn.commit()
 
 
     def __init__(self, window):
@@ -44,6 +54,8 @@ class Product:
         self.tree.grid(row = 4, column = 0, columnspan = 2)
         self.tree.heading('#0', text = 'Name', anchor = CENTER)
         self.tree.heading('#1', text = 'Price', anchor = CENTER)
+        
+        self.create_connection()
 
         self.get_products()
 
@@ -61,23 +73,20 @@ class Product:
         query = 'SELECT * FROM product ORDER BY name DESC'
         db_rows = self.run_query(query)
         for row in db_rows:
-            self.tree.insert('', 0, text = row[1], values = row[2])
+            self.tree.insert('', 0, text = row[0], values = row[1])
 
     def add_product(self):
-        if self.validation():
-            query = 'INSERT INTO product VALUES(NULL, ?, ?)'
-            parameters =  (self.name.get(), self.price.get())
-            self.run_query(query, parameters)
-            self.message['text'] = 'Product {} added Successfully'.format(self.name.get())
-            self.name.delete(0, END)
-            self.price.delete(0, END)
-        else:
-            self.message['text'] = 'Name and Price is Required'
+        query = 'INSERT INTO product VALUES(?, ?)'
+        parameters =  (self.name.get(), self.price.get())
+        self.run_query(query, parameters)
+        self.message['text'] = 'Product {} added Successfully'.format(self.name.get())
+        self.name.delete(0, END)
+        self.price.delete(0, END)
         self.get_products()
 
 
 if __name__ == '__main__':
-    Product.create_connection(r"/Users/rohansonthalia/Desktop/Python/APP/database.db")
-    window = Tk()
+#     Product.create_connection("database.db")
+    window = tk.Tk()
     application = Product(window)
     window.mainloop()
